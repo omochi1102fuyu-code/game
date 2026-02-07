@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ink Arena 3D</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+        background: #060912;
+        touch-action: none;
+      }
+      #app {
+        width: 100%;
+        height: 100%;
+      }
+      #hud {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 10px;
+        background: rgba(5, 8, 14, 0.74);
+        backdrop-filter: blur(4px);
+        min-width: 240px;
+        z-index: 10;
+      }
+      #hud strong {
+        color: #8ee9ff;
+      }
+      #hud .bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      #hud .bar > span {
+        display: block;
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #6ad9ff, #4e87ff);
+        transform-origin: left;
+      }
+      #hint {
+        position: fixed;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(10, 14, 23, 0.8);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+        z-index: 10;
+      }
+      #crosshair {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: 18px;
+        height: 18px;
+        margin-left: -9px;
+        margin-top: -9px;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        z-index: 11;
+        pointer-events: none;
+      }
+      #start {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at center, rgba(15, 20, 35, 0.6), rgba(0, 0, 0, 0.85));
+        z-index: 20;
+        pointer-events: auto;
+        touch-action: manipulation;
+      }
+      #start button {
+        font-size: 18px;
+        color: white;
+        border: 0;
+        border-radius: 14px;
+        padding: 16px 28px;
+        background: linear-gradient(135deg, #00d4ff, #5d4fff);
+        cursor: pointer;
+      }
+      #endMessage {
+        color: #fff;
+        text-align: center;
+        margin-top: 12px;
+      }
+      #touchUi {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 12;
+      }
+      .stick {
+        position: absolute;
+        width: 128px;
+        height: 128px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.24);
+        pointer-events: auto;
+        touch-action: none;
+      }
+      .stick > span {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        margin: -28px 0 0 -28px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      #moveStick {
+        left: 24px;
+        bottom: 22px;
+      }
+      #aimStick {
+        right: 24px;
+        bottom: 22px;
+      }
+      #fireBtn,
+      #jumpBtn,
+      #dashBtn {
+        position: absolute;
+        pointer-events: auto;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        color: white;
+        background: rgba(16, 20, 34, 0.62);
+        backdrop-filter: blur(3px);
+      }
+      #fireBtn {
+        right: 34px;
+        bottom: 168px;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        font-size: 17px;
+      }
+      #jumpBtn,
+      #dashBtn {
+        left: 168px;
+        width: 78px;
+        height: 52px;
+        border-radius: 999px;
+      }
+      #jumpBtn {
+        bottom: 98px;
+      }
+      #dashBtn {
+        bottom: 34px;
+      }
+      .touch-only {
+        display: none;
+      }
+      #touchUi.active {
+        display: block;
+      }
+      @media (hover: none), (pointer: coarse) {
+        .touch-only {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud">
+      <div>残り時間: <strong id="time">90.0</strong>s</div>
+      <div>青チーム塗り率: <strong id="bluePct">50.0%</strong></div>
+      <div>オレンジ塗り率: <strong id="orangePct">50.0%</strong></div>
+      <div>インク残量</div>
+      <div class="bar"><span id="inkBar"></span></div>
+    </div>
+    <div id="crosshair"></div>
+    <div id="hint">PC: WASD/Shift/Space/クリック | iPad: 左右スティック + FIRE/JUMP/DASH</div>
+
+    <div id="touchUi" class="touch-only">
+      <div id="moveStick" class="stick"><span id="moveKnob"></span></div>
+      <div id="aimStick" class="stick"><span id="aimKnob"></span></div>
+      <button id="fireBtn">FIRE</button>
+      <button id="jumpBtn">JUMP</button>
+      <button id="dashBtn">DASH</button>
+    </div>
+
+    <div id="start">
+      <div>
+        <button id="startBtn" type="button">インクバトル開始</button>
+        <div id="endMessage"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
